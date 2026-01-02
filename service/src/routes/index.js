@@ -1,4 +1,4 @@
-module.exports = function(app, security) {
+module.exports = function (app, security) {
   const log = require('../logger');
   const api = require('../api');
   const Event = require('../models/event');
@@ -13,15 +13,21 @@ module.exports = function(app, security) {
     const moduleName = modulePath.slice(0, modulePath.indexOf('.'));
     log.debug(`loading ${moduleName} routes from ${modulePath}`);
     const initRoutes = require('./' + moduleName);
-    initRoutes(app, security);
+    if (typeof initRoutes === 'function') {
+      initRoutes(app, security);
+    } else if (initRoutes && typeof initRoutes.default === 'function') {
+      initRoutes.default(app, security);
+    } else {
+      console.warn(`Module ${moduleName} at ${modulePath} did not export an initialization function. Got: ${typeof initRoutes}`);
+    }
   });
 
   // Grab the event for any endpoint that uses eventId
-  app.param('eventId', function(req, res, next, eventId) {
+  app.param('eventId', function (req, res, next, eventId) {
     if (!/^[0-9]+$/.test(eventId)) {
       return res.status(400).send('Invalid event ID in request path');
     }
-    Event.getById(eventId, { populate: false }, function(err, event) {
+    Event.getById(eventId, { populate: false }, function (err, event) {
       if (!event) return res.status(404).send('Event not found');
       req.event = event;
       next();
@@ -29,11 +35,11 @@ module.exports = function(app, security) {
   });
 
   // Grab the user for any endpoint that uses userId
-  app.param('userId', function(req, res, next, userId) {
+  app.param('userId', function (req, res, next, userId) {
     if (!/^[0-9a-f]{24}$/.test(userId)) {
       return res.status(400).send('Invalid user ID in request path');
     }
-    new api.User().getById(userId, function(err, user) {
+    new api.User().getById(userId, function (err, user) {
       if (!user) return res.status(404).send('User not found');
       req.userParam = user;
       next();
@@ -41,14 +47,14 @@ module.exports = function(app, security) {
   });
 
   // Grab the team for any endpoint that uses teamId
-  app.param('teamId', function(req, res, next, teamId) {
+  app.param('teamId', function (req, res, next, teamId) {
     const options = {};
     if (req.query) {
       for (let [key, value] of Object.entries(req.query)) {
         options[key] = value;
       }
     }
-    Team.getTeamById(teamId, options, function(err, team) {
+    Team.getTeamById(teamId, options, function (err, team) {
       if (!team) return res.status(404).send('Team not found');
       req.team = team;
       next();
@@ -56,8 +62,8 @@ module.exports = function(app, security) {
   });
 
   // Grab the icon for any endpoint that uses iconId
-  app.param('iconId', function(req, res, next, iconId) {
-    Icon.getById(iconId, function(err, icon) {
+  app.param('iconId', function (req, res, next, iconId) {
+    Icon.getById(iconId, function (err, icon) {
       if (!icon) return res.status(404).send('Icon not found');
       req.icon = icon;
       next();
@@ -65,8 +71,8 @@ module.exports = function(app, security) {
   });
 
   // Grab the device for any endpoint that uses deviceId
-  app.param('deviceId', function(req, res, next, deviceId) {
-    Device.getDeviceById(deviceId, function(err, device) {
+  app.param('deviceId', function (req, res, next, deviceId) {
+    Device.getDeviceById(deviceId, function (err, device) {
       if (!device) return res.status(404).send('Device not found');
       req.device = device;
       next();
@@ -74,8 +80,8 @@ module.exports = function(app, security) {
   });
 
   // Grab the role for any endpoint that uses roleId
-  app.param('roleId', function(req, res, next, roleId) {
-    Role.getRoleById(roleId, function(err, role) {
+  app.param('roleId', function (req, res, next, roleId) {
+    Role.getRoleById(roleId, function (err, role) {
       if (!role) return res.status(404).send('Role ' + roleId + ' not found');
       req.role = role;
       next();
@@ -83,7 +89,7 @@ module.exports = function(app, security) {
   });
 
   // Grab the layer for any endpoint that uses layerId
-  app.param('layerId', function(req, res, next, layerId) {
+  app.param('layerId', function (req, res, next, layerId) {
     new api.Layer()
       .getLayer(layerId)
       .then(layer => {
@@ -98,9 +104,9 @@ module.exports = function(app, security) {
   });
 
   // Grab the feature for any endpoint that uses observationId
-  app.param('observationId', function(req, res, next, observationId) {
+  app.param('observationId', function (req, res, next, observationId) {
     req.observationId = observationId;
-    new api.Observation(req.event).getById(observationId, function(
+    new api.Observation(req.event).getById(observationId, function (
       err,
       observation
     ) {

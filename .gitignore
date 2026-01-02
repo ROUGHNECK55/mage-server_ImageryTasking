@@ -22,3 +22,6 @@ scratch/
 # this line must be last
 !.gitkeep
 .angular
+instance/local_config.js
+MAGE/instance/local_config.js
+instance/local_config.js

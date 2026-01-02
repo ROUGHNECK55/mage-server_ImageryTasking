@@ -71,6 +71,7 @@ import { MongooseSettingsRepository, SettingsModel } from './adapters/settings/a
 import { FetchMapSettings, UpdateMapSettings } from './app.impl/settings/app.impl.settings'
 import { RoleBasedMapPermissionService } from './permissions/permissions.settings'
 import { SettingRepository } from './entities/settings/entities.settings'
+import TaskingRoutes from './routes/tasking'
 
 
 export interface MageService {
@@ -98,7 +99,7 @@ export type BootConfig = {
 
 let service: MageService | null = null
 
-export const boot = async function(config: BootConfig): Promise<MageService> {
+export const boot = async function (config: BootConfig): Promise<MageService> {
   if (service) {
     return service as MageService
   }
@@ -140,22 +141,22 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const repos = await initRepositories(dbLayer, config)
   const appLayer = await initAppLayer(repos)
   const { webController, addPluginRoutes } = await initWebLayer(repos, appLayer, config.plugins?.webUIPlugins || [])
-  const routesForPluginId: {[pluginId: string]: WebRoutesHooks } = {}
+  const routesForPluginId: { [pluginId: string]: WebRoutesHooks } = {}
   const collectPluginRoutesToSort = (pluginId: string, initPluginRoutes: WebRoutesHooks): void => {
     routesForPluginId[pluginId] = initPluginRoutes
   }
   const globalScopeServices = new Map<InjectionToken<any>, any>([
-    [ FeedServiceTypeRepositoryToken, repos.feeds.serviceTypeRepo ],
-    [ FeedServiceRepositoryToken, repos.feeds.serviceRepo ],
-    [ FeedRepositoryToken, repos.feeds.feedRepo ],
-    [ MageEventRepositoryToken, repos.events.eventRepo ],
-    [ ObservationRepositoryToken, repos.observations.obsRepoFactory ],
-    [ AttachmentStoreToken, repos.observations.attachmentStore ],
-    [ StaticIconRepositoryToken, repos.icons.staticIconRepo ],
-    [ UserRepositoryToken, repos.users.userRepo ],
-    [ FeedsAppServiceTokens.CreateFeed, appLayer.feeds.createFeed ],
-    [ FeedsAppServiceTokens.UpdateFeed, appLayer.feeds.updateFeed ],
-    [ FeedsAppServiceTokens.DeleteFeed, appLayer.feeds.deleteFeed ],
+    [FeedServiceTypeRepositoryToken, repos.feeds.serviceTypeRepo],
+    [FeedServiceRepositoryToken, repos.feeds.serviceRepo],
+    [FeedRepositoryToken, repos.feeds.feedRepo],
+    [MageEventRepositoryToken, repos.events.eventRepo],
+    [ObservationRepositoryToken, repos.observations.obsRepoFactory],
+    [AttachmentStoreToken, repos.observations.attachmentStore],
+    [StaticIconRepositoryToken, repos.icons.staticIconRepo],
+    [UserRepositoryToken, repos.users.userRepo],
+    [FeedsAppServiceTokens.CreateFeed, appLayer.feeds.createFeed],
+    [FeedsAppServiceTokens.UpdateFeed, appLayer.feeds.updateFeed],
+    [FeedsAppServiceTokens.DeleteFeed, appLayer.feeds.deleteFeed],
   ])
   for (const pluginId of config.plugins?.servicePlugins || []) {
     console.info(`loading plugin ${pluginId}...`)
@@ -348,7 +349,7 @@ type Repositories = {
   },
 }
 
-  // TODO: the real thing
+// TODO: the real thing
 const jsonSchemaService: JsonSchemaService = {
   async validateSchema(schema: JSONSchema4): Promise<JsonValidator> {
     return {
@@ -371,7 +372,7 @@ async function initRepositories(models: DatabaseLayer, config: BootConfig): Prom
     models.icons.staticIcon,
     new SimpleIdFactory(),
     new FileSystemIconContentStore(),
-    [ new PluginUrlScheme(config.plugins?.servicePlugins || []) ])
+    [new PluginUrlScheme(config.plugins?.servicePlugins || [])])
   const userRepo = new MongooseUserRepository(models.users.user)
   const settingRepo = new MongooseSettingsRepository(models.settings.setting)
   const attachmentStore = await intializeAttachmentStore(environment.attachmentBaseDirectory)
@@ -604,6 +605,12 @@ async function initWebLayer(
     eventFeedsRoutes
   ])
 
+  const taskingRoutes = TaskingRoutes(webController, { authentication: webAuth })
+  webController.use('/api/tasking', [
+    bearerAuth,
+    taskingRoutes
+  ])
+
   /*
   no /api prefix here, because this is not really part of the service api. the
   only reason this is here is because there is currently no clean way to apply
@@ -640,14 +647,22 @@ async function initWebLayer(
       }
     }
   }
+  let webAppPath: string;
   try {
     const webappPackagePath = require.resolve('@ngageoint/mage.web-app/package.json')
-    const webAppPath = path.dirname(webappPackagePath)
+    webAppPath = path.dirname(webappPackagePath)
+  } catch (err) {
+    console.warn('Failed to resolve @ngageoint/mage.web-app package:', err);
+    // Fallback for dev environment
+    webAppPath = path.resolve(__dirname, '../../web-app/dist');
+  }
+
+  console.log('Serving static files from:', webAppPath);
+  if (fs.existsSync(path.join(webAppPath, 'app'))) {
     webController.use(express.static(path.join(webAppPath, 'app')))
     webController.use('/admin', express.static(path.join(webAppPath, 'admin')))
-  }
-  catch (err) {
-    console.warn('failed to load mage web app package', err)
+  } else {
+    console.error('Web app static files not found at:', webAppPath);
   }
   return {
     webController,
@@ -664,7 +679,7 @@ async function initWebLayer(
     }
   }
 }
- 
+
 function baseAppRequestContext(req: express.Request): AppRequestContext<UserWithRole> {
   return {
     requestToken: Symbol(),
