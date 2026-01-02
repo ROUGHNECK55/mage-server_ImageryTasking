@@ -146,10 +146,12 @@ import { AdminEventFormModule } from './admin/admin-event/admin-event-form/admin
 import { AdminMapComponent } from './admin/admin-map/admin-map.component';
 import { AdminTeamsModule } from './admin/admin-teams/admin-teams.module';
 import { AdminEventsModule } from './admin/admin-event/admin-events.module';
+import { AdminLayersModule } from './admin/admin-layers/admin-layers.module';
 import { AdminDashboardModule } from './admin/admin-dashboard/admin-dashboard.module';
 import { MatMenuModule } from '@angular/material/menu';
 import { AdminUsersModule } from './admin/admin-users/admin-users.module';
 import { ObservationModule } from './observation/observation.module';
+import { AdminDevicessModule } from './admin/admin-devices/admin-devices.module';
 
 @NgModule({
   declarations: [
@@ -245,6 +247,7 @@ import { ObservationModule } from './observation/observation.module';
     AdminTeamsModule,
     AdminUsersModule,
     AdminEventsModule,
+    AdminLayersModule,
     AdminEventFormModule,
     AdminFeedsModule,
     FeedItemSummaryModule,
@@ -254,7 +257,7 @@ import { ObservationModule } from './observation/observation.module';
     MatStepperModule,
     InputMaskModule.forRoot(),
     AdminDashboardModule,
-    AdminEventsModule
+    AdminDevicessModule,
   ],
   providers: [
     mapServiceProvider,

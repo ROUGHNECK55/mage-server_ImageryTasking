@@ -31,9 +31,14 @@ import { AdminEventFormPreviewComponent } from '../app/admin/admin-event/admin-e
 import { TeamDashboardComponent } from '../app/admin/admin-teams/dashboard/team-dashboard.component';
 import { TeamDetailsComponent } from '../app/admin/admin-teams/team-details/team-details.component';
 import { EventDetailsComponent } from '../app/admin/admin-event/event-details/event-details.component';
+import { FormDetailsComponent } from '../app/admin/admin-event/admin-event-form/form-details/form-details.component';
 import { UserDetailsComponent } from '../app/admin/admin-users/user-details/user-details.component';
 import { UserDashboardComponent } from '../app/admin/admin-users/dashboard/user-dashboard.component';
 import { EventDashboardComponent } from '../app/admin/admin-event/dashboard/event-dashboard.component';
+import { LayerDashboardComponent } from '../app/admin/admin-layers/dashboard/layer-dashboard.component';
+import { LayerDetailsComponent } from '../app/admin/admin-layers/layer-details/layer-details.component';
+import { DeviceDashboardComponent } from '../app/admin/admin-devices/dashboard/devices-dashboard.component';
+import { DeviceDetailsComponent } from '../app/admin/admin-devices/device-details/device-details.component';
 
 require('angular-minicolors');
 require('select2');
@@ -112,6 +117,10 @@ app
     downgradeComponent({ component: EventDetailsComponent })
   )
   .directive(
+    'adminEventFormDetails',
+    downgradeComponent({ component: FormDetailsComponent })
+  )
+  .directive(
     'adminUsers',
     downgradeComponent({ component: UserDashboardComponent })
   )
@@ -126,6 +135,22 @@ app
   .directive(
     'adminEvents',
     downgradeComponent({ component: EventDashboardComponent })
+  )
+  .directive(
+    'layerDashboard',
+    downgradeComponent({ component: LayerDashboardComponent })
+  )
+  .directive(
+    'layerDetails',
+    downgradeComponent({ component: LayerDetailsComponent })
+  )
+  .directive(
+    'adminDevices',
+    downgradeComponent({ component: DeviceDashboardComponent })
+  )
+  .directive(
+    'adminDevice',
+    downgradeComponent({ component: DeviceDetailsComponent })
   );
 
 app
@@ -301,7 +326,7 @@ function config(
 
   $stateProvider.state('admin.formEdit', {
     url: '/events/:eventId/forms/:formId',
-    component: 'adminEventFormEdit',
+    component: 'adminEventFormDetails',
     resolve: resolveAdmin()
   });
 
@@ -351,25 +376,13 @@ function config(
   // Admin layer routes
   $stateProvider.state('admin.layers', {
     url: '/layers',
-    component: 'adminLayers',
-    resolve: resolveAdmin()
-  });
-
-  $stateProvider.state('admin.layerCreate', {
-    url: '/layers/new',
-    component: 'adminLayerEdit',
+    component: 'layerDashboard',
     resolve: resolveAdmin()
   });
 
   $stateProvider.state('admin.layer', {
     url: '/layers/:layerId',
-    component: 'adminLayer',
-    resolve: resolveAdmin()
-  });
-
-  $stateProvider.state('admin.layerEdit', {
-    url: '/layers/:layerId/edit',
-    component: 'adminLayerEdit',
+    component: 'layerDetails',
     resolve: resolveAdmin()
   });
 
